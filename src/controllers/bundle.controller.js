@@ -7,16 +7,20 @@ class BundleController {
 
     new OK({
       message: 'Bundle created successfully',
-      metadata: await bundleService.bundle(content)
+      metadata: await bundleService.bundle(content),
     }).send(res);
   }
 
   async execute(req, res) {
-    const { content, functionName, args } = req.body;
+    const { minify_content, functionName, params } = req.body;
 
     new OK({
       message: 'Function executed successfully',
-      metadata: await bundleService.executeFunction(content, functionName, args)
+      metadata: await bundleService.executeFunction(
+        minify_content,
+        functionName,
+        params
+      ),
     }).send(res);
   }
 }

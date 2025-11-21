@@ -19,7 +19,17 @@ app.use(morgan(isDev ? 'dev' : 'combined'));
 
 app.use('/api/v1', router);
 
-app.use(errorhandler());
+app.use((error, _req, res, _next) => {
+  const statusCode = error.status || 500;
+
+  return res.status(statusCode).json({
+    status: "error",
+    code: statusCode,
+    message: error.message || "Internal Server Error",
+  });
+});
+
+// app.use(errorhandler());
 
 app.listen(port, () => {
   // eslint-disable-next-line no-console
