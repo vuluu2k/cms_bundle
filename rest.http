@@ -4,7 +4,13 @@ POST {{host}}/bundle
 Content-Type: application/json
 
 {
-  "content": "export get_sum = (a, b) => { return a + b; }"
+  "content": "
+  import { debounce } from 'lodash';
+  export get_sum = (request) => {
+    const { a, b } = request.params;
+    return debounce(a + b, 1000); 
+  }
+  "
 }
 
 ### execute
@@ -14,5 +20,8 @@ Content-Type: application/json
 {
   "content": "export get_sum = (a, b) => { return a + b; }",
   "functionName": "get_sum",
-  "args": [1, 2]
+  "params": {
+    "a": 1,
+    "b": 2
+  }
 }

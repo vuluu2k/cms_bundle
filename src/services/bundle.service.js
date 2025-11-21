@@ -15,9 +15,8 @@ class BundleService {
     if (!args) throw new BadRequestError('Args is required');
 
     const wasmCode = await WebAssembly.compile(new Buffer.from(content));
-    console.log(wasmCode);
 
-    return content;
+    return wasmCode;
   }
 }
 
