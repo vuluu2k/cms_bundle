@@ -30,7 +30,7 @@ async function runUserFunction(site_id, file_id, functionName, params) {
     `);
 
     const result = await testScript.run(context, { promise: true });
-    return  { result: JSON.parse(result), logs };
+    return { result: JSON.parse(result), logs };
   } catch (err) {
     throw new BadRequestError(`Execution failed: ${err.message}`);
   } finally {
@@ -51,12 +51,12 @@ async function injectGlobalFunctions(context, jail) {
   const decodeURIRef = new ivm.Reference((str) => {
     return decodeURI(str);
   });
-  
+
   jail.setSync('_encodeURIComponent', encodeURIComponentRef);
   jail.setSync('_decodeURIComponent', decodeURIComponentRef);
   jail.setSync('_encodeURI', encodeURIRef);
   jail.setSync('_decodeURI', decodeURIRef);
-  
+
   // Wrap them to work as functions in the isolate
   await context.eval(`
     global.encodeURIComponent = function(str) {
@@ -172,26 +172,27 @@ async function injectURLSearchParams(context) {
 
 async function injectConsole(context, logs) {
   const jail = context.global;
-  await context.eval("if (!global.console) global.console = {};");
+  await context.eval('if (!global.console) global.console = {};');
   const consoleHandle = await jail.get('console');
-  
-  const makeLogCallback = (type) => new ivm.Callback((...args) => {
-    const copied = args.map((a) => {
-      try {
-        return a.copySync();
-      } catch {
-        return '[Unserializable]';
-      }
-    });
+
+  await consoleHandle.set('log', (...args) => {
     logs.push({
-      type: type,
-      args: copied,
+      type: 'log',
+      args: args,
     });
   });
-  
-  await consoleHandle.set('log', makeLogCallback('log'), { reference: true });
-  await consoleHandle.set('warn', makeLogCallback('warn'), { reference: true });
-  await consoleHandle.set('error', makeLogCallback('error'), { reference: true });
+  await consoleHandle.set('warn', (...args) => {
+    logs.push({
+      type: 'warn',
+      args: args,
+    });
+  });
+  await consoleHandle.set('error', (...args) => {
+    logs.push({
+      type: 'error',
+      args: args,
+    });
+  });
 }
 
 async function injectFetch(context) {
