@@ -1,0 +1,237 @@
+'use strict';
+const ivm = require('isolated-vm');
+const { createIsolate } = require('./sandbox');
+const fs = require('fs');
+const { BadRequestError } = require('../core/error.response');
+
+async function runUserFunction(site_id, file_id, functionName, params) {
+  const { isolate, context, jail } = await createIsolate();
+  try {
+    // set a global vm for isolated-vm
+    const logs = [];
+    jail.setSync('global', jail.derefInto());
+    await injectGlobalFunctions(context, jail);
+    await injectURLSearchParams(context);
+    await injectConsole(context, logs);
+    await injectFetch(context);
+
+    const bundledCode = fs.readFileSync(
+      `bundle/${site_id}/${file_id}.js`,
+      'utf8'
+    );
+
+    const testScript = await isolate.compileScript(`
+      (async () => {
+        ${bundledCode}
+        const result = await MyModule.${functionName}({ params: ${JSON.stringify(params)} });
+        console.log(result);
+        return JSON.stringify(result);
+      })()
+    `);
+
+    const result = await testScript.run(context, { promise: true });
+    return  { result: JSON.parse(result), logs };
+  } catch (err) {
+    throw new BadRequestError(`Execution failed: ${err.message}`);
+  } finally {
+    isolate.dispose();
+  }
+}
+
+async function injectGlobalFunctions(context, jail) {
+  const encodeURIComponentRef = new ivm.Reference((str) => {
+    return encodeURIComponent(str);
+  });
+  const decodeURIComponentRef = new ivm.Reference((str) => {
+    return decodeURIComponent(str);
+  });
+  const encodeURIRef = new ivm.Reference((str) => {
+    return encodeURI(str);
+  });
+  const decodeURIRef = new ivm.Reference((str) => {
+    return decodeURI(str);
+  });
+  
+  jail.setSync('_encodeURIComponent', encodeURIComponentRef);
+  jail.setSync('_decodeURIComponent', decodeURIComponentRef);
+  jail.setSync('_encodeURI', encodeURIRef);
+  jail.setSync('_decodeURI', decodeURIRef);
+  
+  // Wrap them to work as functions in the isolate
+  await context.eval(`
+    global.encodeURIComponent = function(str) {
+      return _encodeURIComponent.apply(undefined, [str], { 
+        arguments: { copy: true }, 
+        result: { copy: true } 
+      });
+    };
+    global.decodeURIComponent = function(str) {
+      return _decodeURIComponent.apply(undefined, [str], { 
+        arguments: { copy: true }, 
+        result: { copy: true } 
+      });
+    };
+    global.encodeURI = function(str) {
+      return _encodeURI.apply(undefined, [str], { 
+        arguments: { copy: true }, 
+        result: { copy: true } 
+      });
+    };
+    global.decodeURI = function(str) {
+      return _decodeURI.apply(undefined, [str], { 
+        arguments: { copy: true }, 
+        result: { copy: true } 
+      });
+    };
+  `);
+}
+
+async function injectURLSearchParams(context) {
+  await context.eval(`
+    global.URLSearchParams = class URLSearchParams {
+      constructor(init) {
+        this._params = new Map();
+        if (init) {
+          if (typeof init === 'string') {
+            if (init.startsWith('?')) init = init.slice(1);
+            init.split('&').forEach(pair => {
+              const [key, value = ''] = pair.split('=').map(decodeURIComponent);
+              if (key) this.append(key, value);
+            });
+          } else if (Array.isArray(init)) {
+            init.forEach(([key, value]) => this.append(key, value));
+          } else if (init && typeof init === 'object') {
+            Object.entries(init).forEach(([key, value]) => this.append(key, value));
+          }
+        }
+      }
+      append(name, value) {
+        const key = String(name);
+        const val = String(value);
+        if (!this._params.has(key)) {
+          this._params.set(key, []);
+        }
+        this._params.get(key).push(val);
+      }
+      delete(name) {
+        this._params.delete(String(name));
+      }
+      get(name) {
+        const values = this._params.get(String(name));
+        return values ? values[0] : null;
+      }
+      getAll(name) {
+        return this._params.get(String(name)) || [];
+      }
+      has(name) {
+        return this._params.has(String(name));
+      }
+      set(name, value) {
+        this._params.set(String(name), [String(value)]);
+      }
+      sort() {
+        const sorted = new Map([...this._params.entries()].sort());
+        this._params = sorted;
+      }
+      toString() {
+        const pairs = [];
+        for (const [key, values] of this._params.entries()) {
+          for (const value of values) {
+            pairs.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
+          }
+        }
+        return pairs.join('&');
+      }
+      *keys() {
+        for (const key of this._params.keys()) {
+          yield key;
+        }
+      }
+      *values() {
+        for (const values of this._params.values()) {
+          for (const value of values) {
+            yield value;
+          }
+        }
+      }
+      *entries() {
+        for (const [key, values] of this._params.entries()) {
+          for (const value of values) {
+            yield [key, value];
+          }
+        }
+      }
+      forEach(callback, thisArg) {
+        for (const [key, value] of this.entries()) {
+          callback.call(thisArg, value, key, this);
+        }
+      }
+    };
+  `);
+}
+
+async function injectConsole(context, logs) {
+  const jail = context.global;
+  await context.eval("if (!global.console) global.console = {};");
+  const consoleHandle = await jail.get('console');
+  
+  const makeLogCallback = (type) => new ivm.Callback((...args) => {
+    const copied = args.map((a) => {
+      try {
+        return a.copySync();
+      } catch {
+        return '[Unserializable]';
+      }
+    });
+    logs.push({
+      type: type,
+      args: copied,
+    });
+  });
+  
+  await consoleHandle.set('log', makeLogCallback('log'), { reference: true });
+  await consoleHandle.set('warn', makeLogCallback('warn'), { reference: true });
+  await consoleHandle.set('error', makeLogCallback('error'), { reference: true });
+}
+
+async function injectFetch(context) {
+  const jail = context.global;
+
+  const fetchImpl = async (url, optionStr) => {
+    try {
+      const options = optionStr ? JSON.parse(optionStr) : {};
+      const res = await fetch(url, options);
+      const text = await res.text();
+      return JSON.stringify({
+        ok: res.ok,
+        status: res.status,
+        body: text,
+        headers: Object.fromEntries(res.headers.entries()),
+      });
+    } catch (e) {
+      return JSON.stringify({ ok: false, error: e.message });
+    }
+  };
+
+  jail.setSync('_fetch', new ivm.Reference(fetchImpl));
+
+  await context.eval(`
+    global.fetch = async function(url, opt) {
+      const o = opt ? JSON.stringify(opt) : '{}';
+      const r = await _fetch.apply(undefined, [url, o], {
+        arguments: { copy: true },
+        result: { promise: true, copy: true }
+      });
+      const json = JSON.parse(r);
+      return {
+        ok: json.ok,
+        status: json.status,
+        headers: new Map(Object.entries(json.headers || {})),
+        text: async () => json.body,
+        json: async () => JSON.parse(json.body),
+      };
+    }
+  `);
+}
+
+module.exports = { runUserFunction };

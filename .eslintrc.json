@@ -14,9 +14,10 @@
     // "quotes": ["error", "single"],
     "semi": ["error", "always"],
     "no-unused-vars": ["warn"],
-    "no-console": ["warn"],
+    "no-console": ["off"],
     "no-undef": ["error"],
     "prefer-const": ["error"],
     "no-var": ["error"]
-  }
+  },
+  "ignorePatterns": ["bundle/**"]
 }

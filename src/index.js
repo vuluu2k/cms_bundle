@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const compression = require('compression');
-const errorhandler = require('errorhandler');
+// const errorhandler = require('errorhandler');
 const morgan = require('morgan');
 
 const router = require('./routers');
@@ -19,6 +19,7 @@ app.use(morgan(isDev ? 'dev' : 'combined'));
 
 app.use('/api/v1', router);
 
+// eslint-disable-next-line no-unused-vars
 app.use((error, _req, res, _next) => {
   const statusCode = error.status || 500;
 

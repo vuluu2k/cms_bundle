@@ -4,7 +4,9 @@ POST {{host}}/bundle
 Content-Type: application/json
 
 {
-  "content": "export const get_fetch = async (request) => { const { url } = request.params; const response = await fetch(url); return response.json(); }"
+  "site_id": "04676357-8025-4e34-9e90-7282777b8536",
+  "file_id": "04676357-8025-4e34-9e90-7282777b8536",
+  "content": "import { DBConnection } from 'webcake-data'; const db = new DBConnection({baseURL: 'http://demo.localhost:24679/api/v1/04676357-8025-4e34-9e90-7282777b8536', 'siteId': '04676357-8025-4e34-9e90-7282777b8536', headers: {'x-cms-api-key': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3OTM1MjgxOTksImlhdCI6MTc2MTk5MjE5OSwicGx1Z190eXBlIjoiY21zIiwic2l0ZV9pZCI6IjA0Njc2MzU3LTgwMjUtNGUzNC05ZTkwLTcyODI3NzdiODUzNiJ9.qFAb3vsQRatgI8fVYBj7wJRGQaMAMtlUnK7Vcphh_XE'}}); const modelTest = db.model('test_1'); export const get_fetch = async (request) => { const result = await modelTest.find({}); return result; };"
 }
 
 ### execute
@@ -12,9 +14,10 @@ POST {{host}}/bundle/execute
 Content-Type: application/json
 
 {
-  "minify_content": "var MyModule = (() => {\n  var __defProp = Object.defineProperty;\n  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;\n  var __getOwnPropNames = Object.getOwnPropertyNames;\n  var __hasOwnProp = Object.prototype.hasOwnProperty;\n  var __name = (target, value) => __defProp(target, \"name\", { value, configurable: true });\n  var __export = (target, all) => {\n    for (var name in all)\n      __defProp(target, name, { get: all[name], enumerable: true });\n  };\n  var __copyProps = (to, from, except, desc) => {\n    if (from && typeof from === \"object\" || typeof from === \"function\") {\n      for (let key of __getOwnPropNames(from))\n        if (!__hasOwnProp.call(to, key) && key !== except)\n          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });\n    }\n    return to;\n  };\n  var __toCommonJS = (mod) => __copyProps(__defProp({}, \"__esModule\", { value: true }), mod);\n\n  // input.js\n  var input_exports = {};\n  __export(input_exports, {\n    get_fetch: () => get_fetch\n  });\n  var get_fetch = /* @__PURE__ */ __name(async (request) => {\n    const { url } = request.params;\n    const response = await fetch(url);\n    return response.json();\n  }, \"get_fetch\");\n  return __toCommonJS(input_exports);\n})();\n",
+  "site_id": "04676357-8025-4e34-9e90-7282777b8536",
+  "file_id": "04676357-8025-4e34-9e90-7282777b8536",
   "functionName": "get_fetch",
   "params": {
-    "url": "https://jsonplaceholder.typicode.com/posts/1"
+    "url": "https://jsonplaceholder.typicode.com/posts/2"
   }
 }
