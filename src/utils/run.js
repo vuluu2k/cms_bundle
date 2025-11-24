@@ -4,6 +4,8 @@ const { createIsolate } = require('./sandbox');
 const fs = require('fs');
 const { BadRequestError } = require('../core/error.response');
 
+const isDev = process.env.NODE_ENV === 'development';
+
 async function runUserFunction(site_id, file_id, functionName, params) {
   const { isolate, context, jail } = await createIsolate();
   try {
@@ -20,11 +22,11 @@ async function runUserFunction(site_id, file_id, functionName, params) {
       'utf8'
     );
 
+    await context.eval(bundledCode);
+
     const testScript = await isolate.compileScript(`
       (async () => {
-        ${bundledCode}
         const result = await MyModule.${functionName}({ params: ${JSON.stringify(params)} });
-        console.log(result);
         return JSON.stringify(result);
       })()
     `);
@@ -87,85 +89,15 @@ async function injectGlobalFunctions(context, jail) {
 }
 
 async function injectURLSearchParams(context) {
+  const jail = context.global;
+  jail.setSync('_URLSearchParams', new ivm.Reference(URLSearchParams));
+
   await context.eval(`
-    global.URLSearchParams = class URLSearchParams {
-      constructor(init) {
-        this._params = new Map();
-        if (init) {
-          if (typeof init === 'string') {
-            if (init.startsWith('?')) init = init.slice(1);
-            init.split('&').forEach(pair => {
-              const [key, value = ''] = pair.split('=').map(decodeURIComponent);
-              if (key) this.append(key, value);
-            });
-          } else if (Array.isArray(init)) {
-            init.forEach(([key, value]) => this.append(key, value));
-          } else if (init && typeof init === 'object') {
-            Object.entries(init).forEach(([key, value]) => this.append(key, value));
-          }
-        }
-      }
-      append(name, value) {
-        const key = String(name);
-        const val = String(value);
-        if (!this._params.has(key)) {
-          this._params.set(key, []);
-        }
-        this._params.get(key).push(val);
-      }
-      delete(name) {
-        this._params.delete(String(name));
-      }
-      get(name) {
-        const values = this._params.get(String(name));
-        return values ? values[0] : null;
-      }
-      getAll(name) {
-        return this._params.get(String(name)) || [];
-      }
-      has(name) {
-        return this._params.has(String(name));
-      }
-      set(name, value) {
-        this._params.set(String(name), [String(value)]);
-      }
-      sort() {
-        const sorted = new Map([...this._params.entries()].sort());
-        this._params = sorted;
-      }
-      toString() {
-        const pairs = [];
-        for (const [key, values] of this._params.entries()) {
-          for (const value of values) {
-            pairs.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
-          }
-        }
-        return pairs.join('&');
-      }
-      *keys() {
-        for (const key of this._params.keys()) {
-          yield key;
-        }
-      }
-      *values() {
-        for (const values of this._params.values()) {
-          for (const value of values) {
-            yield value;
-          }
-        }
-      }
-      *entries() {
-        for (const [key, values] of this._params.entries()) {
-          for (const value of values) {
-            yield [key, value];
-          }
-        }
-      }
-      forEach(callback, thisArg) {
-        for (const [key, value] of this.entries()) {
-          callback.call(thisArg, value, key, this);
-        }
-      }
+    global.URLSearchParams = function(init) {
+      return _URLSearchParams.apply(undefined, [init], {
+        arguments: { copy: true },
+        result: { copy: true }
+      });
     };
   `);
 }
@@ -176,22 +108,19 @@ async function injectConsole(context, logs) {
   const consoleHandle = await jail.get('console');
 
   await consoleHandle.set('log', (...args) => {
-    logs.push({
-      type: 'log',
-      args: args,
-    });
+    if (isDev) console.log(...args);
+    logs.push({ type: 'log', args: args });
   });
   await consoleHandle.set('warn', (...args) => {
+    if (isDev) console.warn(...args);
     logs.push({
       type: 'warn',
       args: args,
     });
   });
   await consoleHandle.set('error', (...args) => {
-    logs.push({
-      type: 'error',
-      args: args,
-    });
+    if (isDev) console.error(...args);
+    logs.push({ type: 'error', args: args });
   });
 }
 
@@ -200,17 +129,17 @@ async function injectFetch(context) {
 
   const fetchImpl = async (url, optionStr) => {
     try {
-      const options = optionStr ? JSON.parse(optionStr) : {};
+      const options = optionStr || {};
       const res = await fetch(url, options);
       const text = await res.text();
-      return JSON.stringify({
+      return {
         ok: res.ok,
         status: res.status,
         body: text,
         headers: Object.fromEntries(res.headers.entries()),
-      });
+      };
     } catch (e) {
-      return JSON.stringify({ ok: false, error: e.message });
+      return { ok: false, error: e.message };
     }
   };
 
@@ -218,12 +147,12 @@ async function injectFetch(context) {
 
   await context.eval(`
     global.fetch = async function(url, opt) {
-      const o = opt ? JSON.stringify(opt) : '{}';
-      const r = await _fetch.apply(undefined, [url, o], {
+      const o = opt || {};
+      const json = await _fetch.apply(undefined, [url, o], {
         arguments: { copy: true },
         result: { promise: true, copy: true }
       });
-      const json = JSON.parse(r);
+
       return {
         ok: json.ok,
         status: json.status,
