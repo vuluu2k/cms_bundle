@@ -3,6 +3,7 @@ const express = require('express');
 const compression = require('compression');
 // const errorhandler = require('errorhandler');
 const morgan = require('morgan');
+const cors = require('cors');
 
 const router = require('./routers');
 
@@ -11,11 +12,20 @@ const app = express();
 
 const port = process.env.PORT || 3000;
 const isDev = process.env.NODE_ENV === 'development';
+const allowedOrigins = isDev ? ['http://localhost:24679'] : ['https://storecake.io'];
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(compression());
 app.use(morgan(isDev ? 'dev' : 'combined'));
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-cms-api-key'],
+  exposedHeaders: ['Content-Type', 'Authorization', 'x-cms-api-key'],
+  credentials: true,
+  maxAge: 86400,
+}));
 
 app.use('/api/v1', router);
 
