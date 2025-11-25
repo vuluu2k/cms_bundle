@@ -58,7 +58,6 @@ class BundleService {
       const callCode = `MyModule.${functionName}({ params: ${JSON.stringify(params)} })`;
       const result = await vm.evalCodeAsync(callCode);
       // eslint-disable-next-line no-console
-      console.log(vm.dump(result.value));
       response.result = vm.dump(result.value);
 
       return response;
