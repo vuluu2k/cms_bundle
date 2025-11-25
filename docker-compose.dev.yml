@@ -18,7 +18,7 @@ services:
       - /app/node_modules
     restart: unless-stopped
     networks:
-      - shared-network
+      - shared_network
     command: npm run dev
 
 networks:
