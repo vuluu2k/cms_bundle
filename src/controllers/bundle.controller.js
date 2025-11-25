@@ -13,15 +13,14 @@ class BundleController {
 
   async execute(req, res) {
     const { functionName, params, site_id, file_id } = req.body;
-
     new OK({
       message: 'Function executed successfully',
-      metadata: await bundleService.executeFunctionIsolatedVM(
+      metadata: await bundleService.executeFunctionIsolatedVM({
         functionName,
         params,
         site_id,
-        file_id
-      ),
+        file_id,
+      }),
     }).send(res);
   }
 

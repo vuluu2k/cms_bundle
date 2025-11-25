@@ -75,7 +75,6 @@ class BundleService {
     file_id,
     isDebug = false,
   } = {}) {
-    console.log(typeof params);
     if (!site_id) throw new BadRequestError('Site ID is required');
     if (!file_id) throw new BadRequestError('File ID is required');
     if (!functionName) throw new BadRequestError('Function name is required');
