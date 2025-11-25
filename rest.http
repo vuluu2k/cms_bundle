@@ -34,3 +34,16 @@ Content-Type: application/json
     "url": "https://jsonplaceholder.typicode.com/posts/2"
   }
 }
+
+### debug
+POST {{host}}/bundle/debug
+Content-Type: application/json
+
+{
+  "site_id": "04676357-8025-4e34-9e90-7282777b8536",
+  "file_id": "04676357-8025-4e34-9e90-7282777b8536",
+  "functionName": "get_fetch",
+  "params": {
+    "url": "https://jsonplaceholder.typicode.com/posts/2"
+  }
+}

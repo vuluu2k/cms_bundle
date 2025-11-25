@@ -37,7 +37,7 @@ class BundleController {
         file_id,
         isDebug: true,
       }),
-    });
+    }).send(res);
   }
 }
 

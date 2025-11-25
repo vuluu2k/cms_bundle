@@ -68,17 +68,29 @@ class BundleService {
     }
   }
 
-  async executeFunctionIsolatedVM({ functionName, params, site_id, file_id, isDebug = false } = {}) {
+  async executeFunctionIsolatedVM({
+    functionName,
+    params = {},
+    site_id,
+    file_id,
+    isDebug = false,
+  } = {}) {
+    console.log(typeof params);
     if (!site_id) throw new BadRequestError('Site ID is required');
     if (!file_id) throw new BadRequestError('File ID is required');
     if (!functionName) throw new BadRequestError('Function name is required');
-    if (!params) throw new BadRequestError('Params is required');
+    let paramsHandle;
+    try {
+      paramsHandle = JSON.parse(params);
+    } catch (error) {
+      paramsHandle = params;
+    }
 
     const result = await runUserFunction(
       site_id,
       file_id,
       functionName,
-      params,
+      paramsHandle,
       isDebug
     );
 
