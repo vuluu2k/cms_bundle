@@ -7,10 +7,9 @@ services:
       dockerfile: Dockerfile.dev
     container_name: cms-bundle-dev
     ports:
-      - "${PORT:-3008}:3000"
-    environment:
-      - NODE_ENV=development
-      - PORT=3000
+      - "${PORT:-3008}:3008"
+    env_file:
+      - .env
     volumes:
       # Mount source code để hot-reload
       - ./src:/app/src
@@ -19,10 +18,11 @@ services:
       - /app/node_modules
     restart: unless-stopped
     networks:
-      - cms-network
+      - shared-network
     command: npm run dev
 
 networks:
-  cms-network:
-    driver: bridge
+  shared_network:
+    external:
+      name: pancake_network
 

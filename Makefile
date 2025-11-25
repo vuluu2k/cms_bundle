@@ -101,7 +101,7 @@ docker-down:
 ## docker-dev: Chạy Docker container (development)
 docker-dev:
 	@echo "🐳 Đang khởi động Docker container (development)..."
-	$(DOCKER_COMPOSE_DEV) up -d
+	$(DOCKER_COMPOSE_DEV) up
 	@echo "✅ Container development đã được khởi động!"
 
 ## docker-logs: Xem logs của Docker container

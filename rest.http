@@ -6,7 +6,7 @@ Content-Type: application/json
 {
   "site_id": "04676357-8025-4e34-9e90-7282777b8536",
   "file_id": "04676357-8025-4e34-9e90-7282777b8536",
-  "content": "import { DBConnection } from 'webcake-data'; const db = new DBConnection({baseURL: 'http://demo.localhost:24679/api/v1/04676357-8025-4e34-9e90-7282777b8536', 'siteId': '04676357-8025-4e34-9e90-7282777b8536', headers: {'x-cms-api-key': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3OTM1MjgxOTksImlhdCI6MTc2MTk5MjE5OSwicGx1Z190eXBlIjoiY21zIiwic2l0ZV9pZCI6IjA0Njc2MzU3LTgwMjUtNGUzNC05ZTkwLTcyODI3NzdiODUzNiJ9.qFAb3vsQRatgI8fVYBj7wJRGQaMAMtlUnK7Vcphh_XE'}}); const modelTest = db.model('test_12'); export const get_fetch = async (request) => { const result = await modelTest.create({okhhh: '1111'}); return result; };"
+  "content": "import { DBConnection } from 'webcake-data'; const db = new DBConnection({baseURL: 'http://localhost:24679/api/v1/04676357-8025-4e34-9e90-7282777b8536', 'siteId': '04676357-8025-4e34-9e90-7282777b8536', headers: {'x-cms-api-key': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3OTM1MjgxOTksImlhdCI6MTc2MTk5MjE5OSwicGx1Z190eXBlIjoiY21zIiwic2l0ZV9pZCI6IjA0Njc2MzU3LTgwMjUtNGUzNC05ZTkwLTcyODI3NzdiODUzNiJ9.qFAb3vsQRatgI8fVYBj7wJRGQaMAMtlUnK7Vcphh_XE'}}); const modelTest = db.model('test_12'); export const get_fetch = async (request) => { const result = await modelTest.find({okhhh: '1111'}); return result; };"
 }
 
 ### execute

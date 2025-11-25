@@ -7,10 +7,9 @@ services:
       dockerfile: Dockerfile
     container_name: cms-bundle
     ports:
-      - "${PORT:-3008}:3000"
-    environment:
-      - NODE_ENV=${NODE_ENV:-production}
-      - PORT=3000
+      - "${PORT:-3008}:3008"
+    env_file:
+      - .env
     volumes:
       # Mount bundle directory để lưu trữ các file bundle
       - ./bundle:/app/bundle
