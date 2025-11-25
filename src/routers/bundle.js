@@ -5,5 +5,6 @@ const { asyncHandler } = require('../utils/handler');
 
 router.post('/', asyncHandler(bundleController.bundle));
 router.post('/execute', asyncHandler(bundleController.execute));
+router.post('/debug', asyncHandler(bundleController.debug));
 
 module.exports = router;
