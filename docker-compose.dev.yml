@@ -17,6 +17,8 @@ services:
       # Mount node_modules để tránh conflict
       - /app/node_modules
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - shared_network
     command: npm run dev

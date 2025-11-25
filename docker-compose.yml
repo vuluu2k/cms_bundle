@@ -14,6 +14,9 @@ services:
       # Mount bundle directory để lưu trữ các file bundle
       - ./bundle:/app/bundle
     restart: unless-stopped
+    extra_hosts:
+      # Cho phép container truy cập host machine qua host.docker.internal
+      - "host.docker.internal:host-gateway"
     networks:
       - cms-network
 

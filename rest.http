@@ -1,12 +1,25 @@
 @host = http://localhost:3008/api/v1
+
 ### bundle
+# IMPORTANT NOTE about connecting to builderx_api:
+# 
+# Service: builderx_api
+# Port mapping: 24679:4000 (host:container)
+# Network: pancake_network (shared with cms-bundle-dev)
+#
+# - When running LOCAL: use 'http://localhost:24679' (port mapped to host)
+# - When running DOCKER: use 'http://builderx_api:4000' (service name + port inside container)
+# 
+# Explanation: 
+# - In Docker network, containers communicate via service name and port inside container
+# - Port 24679 is only the port mapped to host machine, cannot be used in Docker network
 POST {{host}}/bundle
 Content-Type: application/json
 
 {
   "site_id": "04676357-8025-4e34-9e90-7282777b8536",
   "file_id": "04676357-8025-4e34-9e90-7282777b8536",
-  "content": "import { DBConnection } from 'webcake-data'; const db = new DBConnection({baseURL: 'http://builderx_api:24679/api/v1/04676357-8025-4e34-9e90-7282777b8536', 'siteId': '04676357-8025-4e34-9e90-7282777b8536', headers: {'x-cms-api-key': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3OTM1MjgxOTksImlhdCI6MTc2MTk5MjE5OSwicGx1Z190eXBlIjoiY21zIiwic2l0ZV9pZCI6IjA0Njc2MzU3LTgwMjUtNGUzNC05ZTkwLTcyODI3NzdiODUzNiJ9.qFAb3vsQRatgI8fVYBj7wJRGQaMAMtlUnK7Vcphh_XE'}}); const modelTest = db.model('test_12'); export const get_fetch = async (request) => { const result = await modelTest.find({okhhh: '1111'}); return result; };"
+  "content": "import { DBConnection } from 'webcake-data'; const db = new DBConnection({baseURL: 'http://builderx_api:4000/api/v1/04676357-8025-4e34-9e90-7282777b8536', 'siteId': '04676357-8025-4e34-9e90-7282777b8536', headers: {'x-cms-api-key': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3OTM1MjgxOTksImlhdCI6MTc2MTk5MjE5OSwicGx1Z190eXBlIjoiY21zIiwic2l0ZV9pZCI6IjA0Njc2MzU3LTgwMjUtNGUzNC05ZTkwLTcyODI3NzdiODUzNiJ9.qFAb3vsQRatgI8fVYBj7wJRGQaMAMtlUnK7Vcphh_XE'}}); const modelTest = db.model('test_12'); export const get_fetch = async (request) => { const result = await modelTest.find({okhhh: '1111'}); return result; };"
 }
 
 ### execute
