@@ -6,7 +6,13 @@ const { BadRequestError } = require('../core/error.response');
 
 const isDev = process.env.NODE_ENV === 'development';
 
-async function runUserFunction(site_id, file_id, functionName, params) {
+async function runUserFunction(
+  site_id,
+  file_id,
+  functionName,
+  params,
+  isDebug = false
+) {
   const { isolate, context, jail } = await createIsolate();
   try {
     // set a global vm for isolated-vm
@@ -14,7 +20,7 @@ async function runUserFunction(site_id, file_id, functionName, params) {
     jail.setSync('global', jail.derefInto());
     await injectGlobalFunctions(context, jail);
     await injectURLSearchParams(context);
-    await injectConsole(context, logs);
+    await injectConsole(context, logs, isDebug);
     await injectFetch(context);
 
     const bundledCode = fs.readFileSync(
@@ -102,25 +108,26 @@ async function injectURLSearchParams(context) {
   `);
 }
 
-async function injectConsole(context, logs) {
+async function injectConsole(context, logs, isDebug = false) {
   const jail = context.global;
   await context.eval('if (!global.console) global.console = {};');
   const consoleHandle = await jail.get('console');
 
   await consoleHandle.set('log', (...args) => {
     if (isDev) console.log(...args);
-    logs.push({ type: 'log', args: args });
+    if (isDebug) logs.push({ type: 'log', args: args });
   });
   await consoleHandle.set('warn', (...args) => {
     if (isDev) console.warn(...args);
-    logs.push({
-      type: 'warn',
-      args: args,
-    });
+    if (isDebug)
+      logs.push({
+        type: 'warn',
+        args: args,
+      });
   });
   await consoleHandle.set('error', (...args) => {
     if (isDev) console.error(...args);
-    logs.push({ type: 'error', args: args });
+    if (isDebug) logs.push({ type: 'error', args: args });
   });
 }
 

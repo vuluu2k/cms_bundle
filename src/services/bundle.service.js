@@ -68,7 +68,7 @@ class BundleService {
     }
   }
 
-  async executeFunctionIsolatedVM(functionName, params, site_id, file_id) {
+  async executeFunctionIsolatedVM({ functionName, params, site_id, file_id, isDebug = false } = {}) {
     if (!site_id) throw new BadRequestError('Site ID is required');
     if (!file_id) throw new BadRequestError('File ID is required');
     if (!functionName) throw new BadRequestError('Function name is required');
@@ -78,7 +78,8 @@ class BundleService {
       site_id,
       file_id,
       functionName,
-      params
+      params,
+      isDebug
     );
 
     return result;

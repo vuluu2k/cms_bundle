@@ -24,6 +24,21 @@ class BundleController {
       ),
     }).send(res);
   }
+
+  async debug(req, res) {
+    const { functionName, params, site_id, file_id } = req.body;
+
+    new OK({
+      message: 'Debug executed successfully',
+      metadata: await bundleService.executeFunctionIsolatedVM({
+        functionName,
+        params,
+        site_id,
+        file_id,
+        isDebug: true,
+      }),
+    });
+  }
 }
 
 module.exports = new BundleController();
