@@ -141,4 +141,4 @@ docker-stop-dev:
 ## docker-bash-dev: Open bash in development container
 docker-bash-dev:
 	@echo "🐳 Opening bash in development container..."
-	$(DOCKER_COMPOSE_DEV) exec cms-bundle-dev bash
+	$(DOCKER_COMPOSE_DEV) exec cms-bundle bash
