@@ -24,12 +24,14 @@ help:
 	@echo ""
 	@echo "Docker commands:"
 	@echo "  make docker-build     - Build Docker image"
+	@echo "  make docker-build-dev - Build Docker image (development)"
 	@echo "  make docker-up        - Run Docker container (production)"
 	@echo "  make docker-down      - Stop Docker container"
 	@echo "  make docker-dev       - Run Docker container (development)"
 	@echo "  make docker-logs      - View Docker container logs"
 	@echo "  make docker-restart   - Restart Docker container"
 	@echo "  make docker-clean     - Remove Docker containers and images"
+	@echo "  make docker-bash-dev  - Open bash in development container"
 
 ## install: Install dependencies
 install:
@@ -98,6 +100,11 @@ docker-down:
 	$(DOCKER_COMPOSE) down
 	@echo "✅ Container stopped!"
 
+## docker-build-dev: Build Docker image (development)
+docker-build-dev:
+	@echo "🐳 Building Docker image (development)..."
+	$(DOCKER_COMPOSE_DEV) build
+
 ## docker-dev: Run Docker container (development)
 docker-dev:
 	@echo "🐳 Starting Docker container (development)..."
@@ -131,3 +138,7 @@ docker-stop-dev:
 	$(DOCKER_COMPOSE_DEV) down
 	@echo "✅ Development container stopped!"
 
+## docker-bash-dev: Open bash in development container
+docker-bash-dev:
+	@echo "🐳 Opening bash in development container..."
+	$(DOCKER_COMPOSE_DEV) exec cms-bundle-dev bash
