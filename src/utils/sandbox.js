@@ -6,7 +6,6 @@ const createIsolate = async () => {
     memoryLimit: 128,
     inspector: false,
   });
-  // createContextSync() is still supported in v6
   const context = await isolate.createContext();
   const jail = context.global;
   return { isolate, context, jail };
