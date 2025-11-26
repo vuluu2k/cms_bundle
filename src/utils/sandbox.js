@@ -3,10 +3,11 @@ const ivm = require('isolated-vm');
 
 const createIsolate = async () => {
   const isolate = new ivm.Isolate({
-    memoryLimit: 16,
+    memoryLimit: 128,
     inspector: false,
   });
-  const context = isolate.createContextSync();
+  // createContextSync() is still supported in v6
+  const context = await isolate.createContext();
   const jail = context.global;
   return { isolate, context, jail };
 };
