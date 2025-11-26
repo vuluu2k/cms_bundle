@@ -1,11 +1,11 @@
 'use strict';
 const ivm = require('isolated-vm');
+const isolate = new ivm.Isolate({
+  memoryLimit: 4 * 1024,
+  inspector: false,
+});
 
 const createIsolate = async () => {
-  const isolate = new ivm.Isolate({
-    memoryLimit: 128,
-    inspector: false,
-  });
   const context = await isolate.createContext();
   const jail = context.global;
   return { isolate, context, jail };
