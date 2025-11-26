@@ -1,127 +1,246 @@
-# CMS Bundle
+# CMS Bundle Service
 
-Dự án bundle file JavaScript sang WebAssembly (WASM) sử dụng Node.js và Express.
+Dịch vụ backend hỗ trợ đóng gói (bundle) và thực thi mã JavaScript an toàn trong môi trường cô lập (isolated environment), được xây dựng trên nền tảng Node.js và Express.
 
-## 📋 Mô tả
+## 📋 Tính năng chính
 
-CMS Bundle là một ứng dụng Node.js được xây dựng với Express framework, hỗ trợ bundle các file JavaScript thành WebAssembly format.
+- **JavaScript Bundling**: Đóng gói source code JavaScript sử dụng `esbuild` sang định dạng tối ưu (IIFE).
+- **Secure Execution**: Thực thi mã người dùng trong sandbox an toàn sử dụng `isolated-vm`.
+- **API Service**: Cung cấp RESTful API để tương tác với các dịch vụ khác.
 
 ## 🚀 Yêu cầu hệ thống
 
-- Node.js >= 14.x
-- npm >= 6.x
+### Chạy Local
 
-## 📦 Cài đặt
+- **Node.js**: 22.x hoặc 24.x (Khuyến nghị **24.x** hoặc 22.x LTS).
+  > **Lưu ý quan trọng**: `isolated-vm` hiện chưa tương thích hoàn toàn với Node.js 25. Vui lòng sử dụng Node 20, 22 hoặc 24.
+- **Python**: 3.x (Yêu cầu để build `isolated-vm`).
+- **C++ Compiler**: GCC/Clang (Yêu cầu để build native modules).
 
-1. Clone repository:
+### Chạy với Docker
+
+- **Docker**: Phiên bản 20.x trở lên
+- **Docker Compose**: Phiên bản 2.x trở lên
+- **Node.js**: Container sử dụng Node.js 24 (đã được cấu hình sẵn trong Dockerfile)
+
+## 📦 Cài đặt & Chạy ứng dụng
+
+### 1. Chạy trực tiếp (Local)
+
+#### Sử dụng Makefile (Khuyến nghị)
+
+Dự án có sẵn Makefile với các lệnh tiện ích. Xem tất cả các lệnh có sẵn:
+
 ```bash
+make help
+```
+
+```bash
+# Clone repository
 git clone <repository-url>
 cd cms_bundle
+
+# Sử dụng phiên bản Node.js phù hợp (ví dụ nvm)
+# Khuyến nghị sử dụng Node 24 (hoặc Node 22 LTS)
+nvm install 24
+nvm use 24
+
+# Cài đặt dependencies
+make install
+# hoặc: npm install
+
+# Cấu hình môi trường
+cp .env.example .env
+# (Chỉnh sửa file .env nếu cần thiết)
+
+# Chạy ở chế độ Development (Auto-reload)
+make dev
+# hoặc: npm run dev
+
+# Chạy ở chế độ Production
+make start
+# hoặc: npm start
 ```
 
-2. Cài đặt dependencies:
+#### Các lệnh Makefile hữu ích khác
+
 ```bash
-npm install
+# Code Quality
+make lint          # Kiểm tra lỗi ESLint
+make lint-fix      # Tự động sửa lỗi ESLint
+make format        # Format code với Prettier
+make format-check  # Kiểm tra format code
+
+# Cleanup
+make clean         # Xóa node_modules và các file tạm
+
+# Testing
+make test          # Chạy tests
 ```
 
-3. Tạo file `.env` (nếu cần):
+### 2. Chạy với Docker
+
+Dự án hỗ trợ chạy với Docker sử dụng **Node.js 24**, đã được cấu hình sẵn trong Dockerfile. Dự án cung cấp Makefile để đơn giản hóa việc quản lý Docker containers.
+
+#### Sử dụng Makefile (Khuyến nghị)
+
+Dự án có sẵn Makefile với các lệnh tiện ích. Xem tất cả các lệnh có sẵn:
+
 ```bash
-PORT=3000
+make help
 ```
 
-## 🏃 Chạy ứng dụng
+##### Development Mode (với hot-reload)
 
-### Development mode (với auto-reload):
 ```bash
-npm run dev
+# Build và chạy container development
+make docker-build-dev
+make docker-dev
+
+# Xem logs
+make docker-logs-dev
+
+# Dừng container
+make docker-stop-dev
+
+# Vào trong container để debug
+make docker-bash-dev
 ```
 
-### Production mode:
+##### Production Mode
+
 ```bash
-npm start
+# Build Docker image
+make docker-build
+
+# Chạy container ở background
+make docker-up
+
+# Xem logs
+make docker-logs
+
+# Dừng container
+make docker-down
+
+# Restart container
+make docker-restart
 ```
 
-Server sẽ chạy tại `http://localhost:3000` (hoặc port được cấu hình trong `.env`)
+##### Các lệnh Docker hữu ích khác
 
-## 📁 Cấu trúc thư mục
+```bash
+# Xóa tất cả containers, images và volumes
+make docker-clean
+
+# Xem tất cả các lệnh có sẵn
+make help
+```
+
+#### Sử dụng Docker Compose trực tiếp (Tùy chọn)
+
+Nếu bạn muốn sử dụng docker-compose trực tiếp thay vì Makefile:
+
+##### Development Mode
+
+```bash
+# Build và chạy container development
+docker-compose -f docker-compose.dev.yml up --build
+
+# Chạy ở background (detached mode)
+docker-compose -f docker-compose.dev.yml up --build -d
+
+# Xem logs
+docker-compose -f docker-compose.dev.yml logs -f
+
+# Dừng container
+docker-compose -f docker-compose.dev.yml down
+
+# Vào trong container để debug
+docker-compose -f docker-compose.dev.yml exec cms-bundle-dev bash
+```
+
+##### Production Mode
+
+```bash
+# Build và chạy container production
+docker-compose -f docker-compose.yml up --build
+
+# Chạy ở background
+docker-compose -f docker-compose.yml up --build -d
+
+# Xem logs
+docker-compose -f docker-compose.yml logs -f
+
+# Dừng container
+docker-compose -f docker-compose.yml down
+```
+
+#### Lưu ý khi sử dụng Docker
+
+- **Volume Mounting**:
+  - Development: Source code (`./src`) được mount để hỗ trợ hot-reload
+  - Bundle directory (`./bundle`) được mount để lưu trữ các file đã bundle
+  - `node_modules` được mount riêng để tránh conflict giữa host và container
+
+- **Network**:
+  - Development: Sử dụng network `pancake_network` (external network)
+  - Production: Sử dụng network `cms-network` (bridge network)
+
+- **Environment Variables**:
+  - Tạo file `.env` trong root directory
+  - File `.env` sẽ được tự động load vào container
+
+## 📁 Cấu trúc dự án
 
 ```
 cms_bundle/
 ├── src/
-│   ├── controllers/     # Controllers xử lý logic
-│   ├── routers/         # Định nghĩa routes
-│   └── index.js         # Entry point của ứng dụng
-├── .husky/              # Git hooks (Husky)
-├── .eslintrc.json       # Cấu hình ESLint
-├── .prettierrc          # Cấu hình Prettier
-├── .lintstagedrc.json   # Cấu hình lint-staged
-├── package.json
-└── README.md
+│   ├── controllers/     # Xử lý request/response
+│   ├── core/            # Các class xử lý logic cốt lõi (Error/Success Response)
+│   ├── helpers/         # Các hàm tiện ích chung
+│   ├── routers/         # Định nghĩa API routes
+│   ├── services/        # Business logic (Bundling, Execution)
+│   ├── utils/           # Tiện ích hệ thống (Sandbox, Run wrapper)
+│   └── index.js         # Entry point
+├── bundle/              # Thư mục chứa các file đã được đóng gói
+├── Dockerfile           # Cấu hình build Docker Production
+├── Dockerfile.dev       # Cấu hình build Docker Development
+├── docker-compose.yml   # Docker Compose Production
+├── docker-compose.dev.yml # Docker Compose Development
+└── Makefile             # Makefile với các lệnh tiện ích
 ```
 
-## 🛠️ Scripts có sẵn
+## 🔌 API Endpoints
 
-### Development
-- `npm start` - Chạy ứng dụng ở production mode
-- `npm run dev` - Chạy ứng dụng ở development mode với auto-reload
+| Method | Endpoint          | Mô tả                           | Payload Body (Example)                                                         |
+| ------ | ----------------- | ------------------------------- | ------------------------------------------------------------------------------ |
+| POST   | `/api/v1/bundle`  | Đóng gói source code JS         | `{ "content": "...", "site_id": "...", "file_id": "..." }`                     |
+| POST   | `/api/v1/execute` | Thực thi function trong sandbox | `{ "functionName": "main", "params": {}, "site_id": "...", "file_id": "..." }` |
+| POST   | `/api/v1/debug`   | Thực thi function với log debug | `{ "functionName": "main", "params": {}, "site_id": "...", "file_id": "..." }` |
 
-### Code Quality
-- `npm run lint` - Kiểm tra lỗi ESLint
-- `npm run lint:fix` - Tự động sửa lỗi ESLint
-- `npm run format` - Format toàn bộ code với Prettier
-- `npm run format:check` - Kiểm tra format code (không tự động sửa)
+## 🛠️ Công cụ phát triển (Dev Tools)
 
-### Testing
-- `npm test` - Chạy tests (chưa được cấu hình)
+Dự án tích hợp sẵn các công cụ để đảm bảo chất lượng code và cung cấp Makefile để đơn giản hóa các tác vụ thường dùng.
 
-## 🔧 Code Quality Tools
+### Makefile Commands
 
-Dự án được tích hợp các công cụ đảm bảo chất lượng code:
+Dự án cung cấp Makefile với các lệnh tiện ích. Chạy `make help` để xem danh sách đầy đủ:
 
-### Prettier
-- Format code tự động theo chuẩn đã cấu hình
-- Cấu hình: `.prettierrc`
-- File bỏ qua: `.prettierignore`
+- **Development**: `make dev`, `make start`
+- **Code Quality**: `make lint`, `make lint-fix`, `make format`, `make format-check`
+- **Docker**: `make docker-dev`, `make docker-up`, `make docker-down`, `make docker-logs-dev`
+- **Cleanup**: `make clean`, `make docker-clean`
 
-### ESLint
-- Kiểm tra và đảm bảo code quality
-- Cấu hình: `.eslintrc.json`
-- File bỏ qua: `.eslintignore`
+### Code Quality Tools
 
-### Husky
-- Git hooks tự động chạy lint và format trước khi commit
-- Pre-commit hook: Tự động chạy `lint-staged` để format và lint các file đã thay đổi
-
-### Lint-staged
-- Chỉ format/lint các file đã thay đổi trong commit
-- Cấu hình: `.lintstagedrc.json`
-
-## 📝 Quy trình làm việc
-
-1. Tạo branch mới cho feature/bugfix
-2. Viết code và commit
-3. Trước khi commit, Husky sẽ tự động:
-   - Chạy ESLint để kiểm tra lỗi
-   - Format code với Prettier
-4. Nếu có lỗi, commit sẽ bị chặn cho đến khi sửa xong
-
-## 🔐 Environment Variables
-
-Tạo file `.env` trong root directory với các biến sau:
-
-```env
-PORT=3000
-```
-
-## 📄 License
-
-ISC
-
-## 👤 Author
-
----
+- **Linting**: `make lint` hoặc `npm run lint` (Kiểm tra lỗi code với ESLint)
+- **Formatting**: `make format` hoặc `npm run format` (Định dạng code với Prettier)
+- **Git Hooks**: Sử dụng `husky` để tự động kiểm tra code trước khi commit.
 
 ## 🤝 Đóng góp
 
-Mọi đóng góp đều được chào đón! Vui lòng tạo issue hoặc pull request.
-
+1. Fork dự án
+2. Tạo feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit thay đổi (`git commit -m 'Add some AmazingFeature'`)
+4. Push lên branch (`git push origin feature/AmazingFeature`)
+5. Tạo Pull Request
