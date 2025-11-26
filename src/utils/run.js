@@ -20,6 +20,9 @@ async function runUserFunction(
   }
 
   const { isolate, context, jail } = await createIsolate();
+  let bundledScript = null;
+  let callScript = null;
+
   try {
     const logs = [];
 
@@ -39,12 +42,12 @@ async function runUserFunction(
     );
 
     // Compile bundled code for better performance and security
-    const bundledScript = await isolate.compileScript(bundledCode);
+    bundledScript = await isolate.compileScript(bundledCode);
     await bundledScript.run(context, { timeout: EXECUTION_TIMEOUT });
 
     // Safely construct the function call script
     const paramsJson = JSON.stringify(params);
-    const callScript = await isolate.compileScript(`
+    callScript = await isolate.compileScript(`
       (async () => {
         if (typeof MyModule === 'undefined' || typeof MyModule.${functionName} !== 'function') {
           throw new Error('Function ${functionName} not found in MyModule');
@@ -71,7 +74,15 @@ async function runUserFunction(
     const errorMessage = err.message || 'Unknown error';
     throw new BadRequestError(`Execution failed: ${errorMessage}`);
   } finally {
-    isolate.dispose();
+    context.release();
+
+    if (bundledScript) {
+      bundledScript.release();
+    }
+
+    if (callScript) {
+      callScript.release();
+    }
   }
 }
 
@@ -120,12 +131,23 @@ async function injectGlobalFunctions(isolate, context, jail) {
     };
   `);
 
-  await wrapperScript.run(context);
+  try {
+    await wrapperScript.run(context);
+  } finally {
+    // Release script after use to free memory
+    wrapperScript.release();
+  }
 }
 
 async function injectURLSearchParams(isolate, context) {
   const jail = context.global;
-  jail.setSync('_URLSearchParams', new ivm.Reference(URLSearchParams));
+
+  // Create a wrapper function that calls URLSearchParams with 'new'
+  const urlSearchParamsFactory = (init) => {
+    return new URLSearchParams(init);
+  };
+
+  jail.setSync('_URLSearchParams', new ivm.Reference(urlSearchParamsFactory));
 
   const urlSearchParamsScript = await isolate.compileScript(`
     global.URLSearchParams = function(init) {
@@ -136,7 +158,11 @@ async function injectURLSearchParams(isolate, context) {
     };
   `);
 
-  await urlSearchParamsScript.run(context);
+  try {
+    await urlSearchParamsScript.run(context);
+  } finally {
+    urlSearchParamsScript.release();
+  }
 }
 
 async function injectConsole(isolate, context, logs, isDebug = false) {
@@ -187,7 +213,11 @@ async function injectConsole(isolate, context, logs, isDebug = false) {
     };
   `);
 
-  await consoleScript.run(context);
+  try {
+    await consoleScript.run(context);
+  } finally {
+    consoleScript.release();
+  }
 }
 
 async function injectFetch(isolate, context) {
@@ -235,7 +265,11 @@ async function injectFetch(isolate, context) {
     };
   `);
 
-  await fetchScript.run(context);
+  try {
+    await fetchScript.run(context);
+  } finally {
+    fetchScript.release();
+  }
 }
 
 module.exports = { runUserFunction };
