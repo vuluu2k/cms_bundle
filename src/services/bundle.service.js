@@ -73,6 +73,7 @@ class BundleService {
     params = {},
     site_id,
     file_id,
+    customer = {},
     isDebug = false,
   } = {}) {
     if (!site_id) throw new BadRequestError('Site ID is required');
@@ -90,7 +91,8 @@ class BundleService {
       file_id,
       functionName,
       paramsHandle,
-      isDebug
+      isDebug,
+      customer
     );
 
     return result;

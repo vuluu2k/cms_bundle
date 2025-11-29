@@ -28,7 +28,7 @@ Content-Type: application/json
 
 {
   "site_id": "04676357-8025-4e34-9e90-7282777b8536",
-  "file_id": "04676357-8025-4e34-9e90-7282777b8536",
+  "file_id": "0dd5bc7d-fb03-48a6-bc4a-6edb66ce8faf",
   "functionName": "get_fetch",
   "params": {
     "url": "https://jsonplaceholder.typicode.com/posts/2"

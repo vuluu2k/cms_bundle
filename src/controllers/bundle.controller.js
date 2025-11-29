@@ -12,7 +12,7 @@ class BundleController {
   }
 
   async execute(req, res) {
-    const { functionName, params, site_id, file_id } = req.body;
+    const { functionName, params, site_id, file_id, customer } = req.body;
     new OK({
       message: 'Function executed successfully',
       metadata: await bundleService.executeFunctionIsolatedVM({
@@ -20,12 +20,13 @@ class BundleController {
         params,
         site_id,
         file_id,
+        customer,
       }),
     }).send(res);
   }
 
   async debug(req, res) {
-    const { functionName, params, site_id, file_id } = req.body;
+    const { functionName, params, site_id, file_id, customer } = req.body;
 
     new OK({
       message: 'Debug executed successfully',
@@ -34,6 +35,7 @@ class BundleController {
         params,
         site_id,
         file_id,
+        customer,
         isDebug: true,
       }),
     }).send(res);
